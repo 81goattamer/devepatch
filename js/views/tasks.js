@@ -47,6 +47,6 @@ export function tasksView() {
           g.done.map((tk) => taskRow(tk, { showDate: true }))),
       ])
       : h('div', { class: 'empty-msg' }, t('tasks.empty')),
-    fab('tool', t('task.addTitle'), () => openTaskForm()),
+    fab('addTask', t('task.addTitle'), () => openTaskForm()),
   ];
 }

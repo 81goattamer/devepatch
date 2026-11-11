@@ -56,7 +56,7 @@ function detailView(app) {
       : h('div', { class: 'group-empty' }, t('detail.noOpen')),
     done.length > 0 && h('div', { class: 'group-title' }, t('detail.done')),
     done.length > 0 && h('div', { class: 'group tasks' }, done.map((tk) => taskRow(tk, { showDate: true }))),
-    fab('tool', t('task.addTitle'), () => openTaskForm({ appId: app.id })),
+    fab('addTask', t('task.addTitle'), () => openTaskForm({ appId: app.id })),
   ];
 }
 
