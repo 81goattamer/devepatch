@@ -224,3 +224,4 @@ a { color: var(--accent); }
 /* 追加ボタンの「＋」バッジ：すき間と＋はボタンの地の色で抜く */
 .fab .badge-gap { fill: var(--accent); }
 .fab .badge-plus { stroke: var(--accent); }
+.fab svg { overflow: visible; }
