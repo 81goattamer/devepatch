@@ -165,8 +165,8 @@ export function openTaskDetail(task) {
     h('h2', { class: `task-detail-title${task.completedAt ? ' done' : ''}` }, task.title),
     task.description && h('p', { class: 'task-detail-desc' }, task.description),
     h('div', { class: 'group' },
-      h('div', { class: 'row' }, h('span', {}, t('task.created')), h('span', { class: 'row-value' }, isoToDate(task.createdAt))),
-      task.completedDate && h('div', { class: 'row' }, h('span', {}, t('task.completed')), h('span', { class: 'row-value' }, formatDate(task.completedDate)))),
+      h('div', { class: 'row', 'aria-label': t('task.created') }, icon('plusCircle', 20), h('span', { class: 'row-label' }, isoToDate(task.createdAt))),
+      task.completedDate && h('div', { class: 'row', 'aria-label': t('task.completed') }, icon('checkCircle', 20), h('span', { class: 'row-label' }, formatDate(task.completedDate)))),
     h('div', { class: 'group' },
       h('button', { type: 'button', class: 'row-btn', onClick: async () => {
         sheet.close();
@@ -194,7 +194,7 @@ export function taskRow(task, { showDate = false } = {}) {
     h('button', { type: 'button', class: 'task-main', onClick: () => openTaskDetail(task) },
       h('span', { class: 'task-title' }, task.title),
       task.description && h('span', { class: 'task-desc' }, task.description),
-      showDate && task.completedDate && h('span', { class: 'task-date' }, t('task.doneOn', { date: formatDate(task.completedDate) }))),
+      showDate && task.completedDate && h('span', { class: 'task-date', 'aria-label': t('task.doneOn', { date: formatDate(task.completedDate) }) }, icon('checkCircle', 14), formatDate(task.completedDate))),
     h('button', {
       type: 'button', class: 'task-more', 'aria-label': '…',
       onClick: () => actionSheet([

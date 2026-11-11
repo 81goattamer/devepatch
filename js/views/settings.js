@@ -24,15 +24,12 @@ export function settingsView() {
 
   return [
     h('header', { class: 'large-title' }, h('h1', {}, t('tab.settings'))),
-    h('div', { class: 'group-title' }, t('settings.general')),
     h('div', { class: 'group' },
       row(t('settings.language'), langLabel[settings.language], choose(t('settings.language'), 'language', langLabel)),
       row(t('settings.theme'), themeLabel[settings.theme], choose(t('settings.theme'), 'theme', themeLabel))),
-    h('div', { class: 'group-title' }, t('settings.backup')),
     h('div', { class: 'group' },
       row(t('settings.export'), null, exportData, 'download'),
       row(t('settings.import'), null, importData, 'upload')),
-    h('div', { class: 'group-note' }, t('settings.backupNote')),
     h('div', { class: 'group' },
       h('div', { class: 'row' }, h('span', { class: 'row-label' }, t('settings.version')), h('span', { class: 'row-value' }, self.APP_VERSION))),
   ];

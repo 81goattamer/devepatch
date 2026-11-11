@@ -225,3 +225,10 @@ a { color: var(--accent); }
 .fab .badge-gap { fill: var(--accent); }
 .fab .badge-plus { stroke: var(--accent); }
 .fab svg { overflow: visible; }
+/* 文字を減らした表示 */
+.empty-msg .icon { color: var(--faint); opacity: .6; margin-bottom: 12px; }
+.empty-msg { display: flex; flex-direction: column; align-items: center; }
+.group-title.sym { display: flex; align-items: center; gap: 6px; font-size: 15px; }
+.chip.icon-only { width: 40px; padding: 0; justify-content: center; }
+.task-date { display: inline-flex; align-items: center; gap: 4px; }
+.row > .icon:first-child { color: var(--sub); }

@@ -22,7 +22,7 @@ export function libraryView() {
   return [
     h('header', { class: 'large-title' }, h('h1', {}, t('tab.library'))),
     installHint(),
-    apps.length ? grid : h('div', { class: 'empty-msg' }, t('library.empty')),
+    apps.length ? grid : h('div', { class: 'empty-msg' }, icon('library', 56), h('div', {}, t('library.empty'))),
     apps.length > 1 && h('div', { class: 'grid-hint' }, t('library.reorderHint')),
     fab('addApp', t('library.add'), () => openAppForm()),
   ];
@@ -50,11 +50,10 @@ function detailView(app) {
       info(t('app.purpose'), app.purpose),
       app.url && h('a', { class: 'info link', href: hrefOf(app.url), target: '_blank', rel: 'noopener noreferrer' },
         icon('link', 18), h('span', { class: 'info-value' }, app.url))),
-    h('div', { class: 'group-title' }, t('detail.open')),
-    open.length
-      ? h('div', { class: 'group tasks' }, open.map((tk) => taskRow(tk)))
-      : h('div', { class: 'group-empty' }, t('detail.noOpen')),
-    done.length > 0 && h('div', { class: 'group-title' }, t('detail.done')),
+    // 見出しは記号と件数（○ 未完了、✓ 完了）
+    open.length > 0 && h('div', { class: 'group-title sym', 'aria-label': t('detail.open') }, icon('circle', 16), open.filter((tk) => !tk.completedAt).length),
+    open.length > 0 && h('div', { class: 'group tasks' }, open.map((tk) => taskRow(tk))),
+    done.length > 0 && h('div', { class: 'group-title sym', 'aria-label': t('detail.done') }, icon('checkCircle', 16), done.length),
     done.length > 0 && h('div', { class: 'group tasks' }, done.map((tk) => taskRow(tk, { showDate: true }))),
     fab('addTask', t('task.addTitle'), () => openTaskForm({ appId: app.id })),
   ];

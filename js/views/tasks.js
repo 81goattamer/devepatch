@@ -3,15 +3,18 @@ import { openTaskForm, taskRow } from '../forms.js';
 import { t } from '../i18n.js';
 import * as S from '../state.js';
 import { groupTasks } from '../store.js';
-import { appIconEl, fab, h } from '../ui.js';
+import { appIconEl, fab, h, icon } from '../ui.js';
 
 export function tasksView() {
   const { ui, apps, tasks, today } = S.state;
   const f = ui.filter;
   if (f.appId !== 'all' && !S.appById(f.appId)) f.appId = 'all';
 
-  const chip = (label, on, onClick, iconEl) =>
-    h('button', { type: 'button', class: `chip${on ? ' on' : ''}`, 'aria-pressed': String(on), onClick }, iconEl, label);
+  const chip = (label, on, onClick, iconEl, iconOnly = false) =>
+    h('button', {
+      type: 'button', class: `chip${on ? ' on' : ''}${iconOnly ? ' icon-only' : ''}`, 'aria-pressed': String(on),
+      'aria-label': iconOnly ? label : null, title: iconOnly ? label : null, onClick,
+    }, iconEl, !iconOnly && label);
 
   const appChips = h('div', { class: 'chips scroll' },
     chip(t('tasks.all'), f.appId === 'all', () => {
@@ -31,8 +34,8 @@ export function tasksView() {
     S.render();
   };
   const statusChips = h('div', { class: 'chips' },
-    chip(t('tasks.open'), f.open, toggle('open')),
-    chip(t('tasks.done'), f.done, toggle('done')));
+    chip(t('tasks.open'), f.open, toggle('open'), icon('circle', 20), true),
+    chip(t('tasks.done'), f.done, toggle('done'), icon('checkCircle', 20), true));
 
   const groups = groupTasks(apps, tasks, { ...f, today });
 
@@ -46,7 +49,7 @@ export function tasksView() {
           g.open.map((tk) => taskRow(tk)),
           g.done.map((tk) => taskRow(tk, { showDate: true }))),
       ])
-      : h('div', { class: 'empty-msg' }, t('tasks.empty')),
+      : h('div', { class: 'empty-msg' }, icon('checkCircle', 56), h('div', {}, t('tasks.empty'))),
     fab('addTask', t('task.addTitle'), () => openTaskForm()),
   ];
 }
