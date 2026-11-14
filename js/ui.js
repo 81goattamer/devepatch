@@ -36,6 +36,7 @@ const PATHS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   circle: '<circle cx="12" cy="12" r="8.5"/>',
   checkCircle: '<circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.7 2.7L16 9.7"/>',
+  minusCircle: '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h7"/>',
   plusCircle: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/>',
   more: '<circle cx="5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.3" fill="currentColor" stroke="none"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
@@ -49,6 +50,23 @@ const PATHS = {
 export function icon(name, size = 24) {
   const s = h('span', { class: 'icon', 'aria-hidden': 'true' });
   s.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PATHS[name]}</svg>`;
+  return s;
+}
+
+// 進み具合の円。12時の位置から時計回りに塗り、全部済むと ●（ratio は 0〜1）
+export function progressRing(ratio, size = 26, label = '') {
+  const r = 9;
+  const c = 12;
+  let fill = '';
+  if (ratio >= 1) fill = `<circle cx="${c}" cy="${c}" r="${r}" fill="currentColor"/>`;
+  else if (ratio > 0) {
+    const a = ratio * 2 * Math.PI;
+    const x = (c + r * Math.sin(a)).toFixed(3);
+    const y = (c - r * Math.cos(a)).toFixed(3);
+    fill = `<path d="M${c} ${c}L${c} ${c - r}A${r} ${r} 0 ${ratio > 0.5 ? 1 : 0} 1 ${x} ${y}Z" fill="currentColor"/>`;
+  }
+  const s = h('span', { class: 'ring', role: 'img', 'aria-label': label });
+  s.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24">${fill}<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
   return s;
 }
 

@@ -1,7 +1,7 @@
 // メモリ上のデータと、それを変える操作。変えたら保存して画面を描き直す
 import * as db from './db.js';
 import {
-  DEFAULT_SETTINGS, completeTask, logicalDate, mergeData, nextOrder, reopenTask, reorder, sortApps, uuid,
+  DEFAULT_SETTINGS, completeTask, flowOf, logicalDate, mergeData, nextOrder, reopenTask, reorder, setFlow, sortApps, toggleStep, uuid,
 } from './store.js';
 
 export const state = {
@@ -66,9 +66,10 @@ export async function saveOrder(ids) {
   render();
 }
 
-export async function addTask({ appId, title, description }) {
+export async function addTask({ appId, title, description, flow = [] }) {
   const at = now();
-  const task = { id: uuid(), appId, title, description, completedAt: null, completedDate: null, createdAt: at, updatedAt: at };
+  const base = { id: uuid(), appId, title, description, flow: [], completedAt: null, completedDate: null, createdAt: at, updatedAt: at };
+  const task = setFlow(base, flow);
   await db.putTask(task);
   state.tasks = [...state.tasks, task];
   render();
@@ -80,13 +81,19 @@ async function replaceTask(task) {
   render();
 }
 
-export const updateTask = (id, fields) =>
-  replaceTask({ ...state.tasks.find((t) => t.id === id), ...fields, updatedAt: now() });
+export function updateTask(id, { flow, ...fields }) {
+  const task = { ...state.tasks.find((t) => t.id === id), ...fields, updatedAt: now() };
+  return replaceTask(flow ? setFlow(task, flow) : task);
+}
 
+// ○ の完了はフローのないタスクだけ。フローがあるタスクはステップで進める
 export function toggleTask(id) {
   const task = state.tasks.find((t) => t.id === id);
+  if (flowOf(task).length) return Promise.resolve();
   return replaceTask(task.completedAt ? reopenTask(task) : completeTask(task));
 }
+
+export const toggleTaskStep = (id, stepId) => replaceTask(toggleStep(state.tasks.find((t) => t.id === id), stepId));
 
 export async function removeTask(id) {
   await db.deleteTask(id);

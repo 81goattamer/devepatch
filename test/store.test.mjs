@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  BackupError, appIcon, buildBackup, completeTask, doneTasks, groupTasks, hrefOf, initial, logicalDate,
+  BackupError, appIcon, buildBackup, flowFromNames, flowProgress, setFlow, toggleStep, completeTask, doneTasks, groupTasks, hrefOf, initial, logicalDate,
   mergeData, nextOrder, openTasks, parseBackup, reopenTask, reorder,
 } from '../js/store.js';
 
@@ -113,4 +113,42 @@ test('上書きと統合', () => {
   assert.deepEqual(merged.apps.map((a) => [a.id, a.name, a.order]), [['a', 'A2', 0], ['b', 'B', 1], ['c', 'C', 2]]);
   assert.deepEqual(merged.tasks.map((t) => t.title).sort(), ['B', 'ファイル']);
   assert.equal(merged.settings.language, 'en');
+});
+
+test('標準フローの名前からステップを作る（空の名前は捨てる）', () => {
+  const flow = flowFromNames(['コード作成', ' ', '反映確認']);
+  assert.deepEqual(flow.map((st) => st.name), ['コード作成', '反映確認']);
+  assert.ok(flow.every((st) => st.id && st.doneAt === null));
+  assert.deepEqual(flowFromNames(undefined), []);
+});
+
+test('ステップを全部済ませると完了、1つ戻すと未完了に戻る', () => {
+  const base = { id: 't', appId: 'a', title: 'バックアップ機能の追加', completedAt: null, completedDate: null, flow: flowFromNames(['コード作成', '反映確認']) };
+  const [s1, s2] = base.flow;
+  let task = toggleStep(base, s1.id, at('2026-11-14T10:00:00'));
+  assert.deepEqual(flowProgress(task), { done: 1, total: 2, ratio: 0.5 });
+  assert.equal(task.completedAt, null);
+  task = toggleStep(task, s2.id, at('2026-11-15T02:00:00'));
+  assert.equal(flowProgress(task).ratio, 1);
+  assert.equal(task.completedDate, '2026-11-14'); // 午前4時より前なので前の日
+  task = toggleStep(task, s1.id, at('2026-11-15T09:00:00'));
+  assert.equal(task.completedAt, null);
+  assert.equal(task.completedDate, null);
+});
+
+test('フローを編集して未済みのステップが増えたら未完了に戻る', () => {
+  const flow = flowFromNames(['A']).map((st) => ({ ...st, doneAt: '2026-11-14T10:00:00Z' }));
+  const done = { id: 't', flow, completedAt: '2026-11-14T10:00:00Z', completedDate: '2026-11-14' };
+  const more = setFlow(done, [...flow, ...flowFromNames(['B'])]);
+  assert.equal(more.completedAt, null);
+  const fewer = setFlow(more, [{ ...more.flow[0] }, { ...more.flow[1], name: '  ' }], at('2026-11-14T12:00:00'));
+  assert.equal(fewer.flow.length, 1);
+  assert.equal(fewer.completedDate, '2026-11-14');
+});
+
+test('版1のバックアップはフローなしとして読み込める', () => {
+  const v1 = { app: 'devepatch', schemaVersion: 1, exportedAt: '2026-11-11T00:00:00Z', data: { apps: [{ id: 'a', name: 'A', order: 0 }], tasks: [{ id: '1', appId: 'a', title: 'x' }], settings: {} } };
+  const parsed = parseBackup(JSON.stringify(v1));
+  assert.deepEqual(parsed.apps[0].defaultFlow, []);
+  assert.deepEqual(parsed.tasks[0].flow, []);
 });

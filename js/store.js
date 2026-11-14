@@ -1,7 +1,7 @@
 // 画面に依存しない計算（Node のテストからも読み込む）
 
 export const APP_NAME = 'devepatch';
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2; // 2: フロー（apps.defaultFlow・tasks.flow）を追加
 export const DEFAULT_SETTINGS = { language: 'auto', theme: 'auto' };
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -61,6 +61,43 @@ export function completeTask(task, at = new Date()) {
 
 export function reopenTask(task, at = new Date()) {
   return { ...task, completedAt: null, completedDate: null, updatedAt: at.toISOString() };
+}
+
+// ---- フロー ----
+// tasks.flow: [{ id, name, doneAt }]。apps.defaultFlow: ['コード作成', '反映確認'] のような名前の並び
+
+export const flowOf = (task) => (Array.isArray(task.flow) ? task.flow : []);
+
+export function flowProgress(task) {
+  const flow = flowOf(task);
+  const done = flow.filter((st) => st.doneAt).length;
+  return { done, total: flow.length, ratio: flow.length ? done / flow.length : 0 };
+}
+
+export function flowFromNames(names) {
+  return (names || []).map((name) => String(name).trim()).filter(Boolean).map((name) => ({ id: uuid(), name, doneAt: null }));
+}
+
+// フローがあるタスクの完了：すべてのステップが済んだら完了、1つでも残っていれば未完了
+function syncCompletion(task, at) {
+  const { done, total } = flowProgress(task);
+  if (!total) return task;
+  if (done === total) {
+    if (task.completedAt) return task;
+    return { ...task, completedAt: at.toISOString(), completedDate: logicalDate(at) };
+  }
+  return task.completedAt ? { ...task, completedAt: null, completedDate: null } : task;
+}
+
+export function toggleStep(task, stepId, at = new Date()) {
+  const flow = flowOf(task).map((st) => (st.id === stepId ? { ...st, doneAt: st.doneAt ? null : at.toISOString() } : st));
+  return syncCompletion({ ...task, flow, updatedAt: at.toISOString() }, at);
+}
+
+// 編集でフローを入れ替えたとき。名前が空のステップは捨てる
+export function setFlow(task, flow, at = new Date()) {
+  const clean = flow.map((st) => ({ ...st, name: String(st.name).trim() })).filter((st) => st.name);
+  return syncCompletion({ ...task, flow: clean, updatedAt: at.toISOString() }, at);
 }
 
 // ダークならダーク用、なければライト用。ライトならその逆。どちらもなければ null（頭文字を出す）
@@ -123,12 +160,12 @@ export function parseBackup(text) {
   if (tasks.some((t) => !t || !t.id || !t.appId || typeof t.title !== 'string')) throw new BackupError('invalid');
   return {
     apps: apps.map((a, i) => ({
-      iconLight: null, iconDark: null, description: '', purpose: '', url: '',
+      iconLight: null, iconDark: null, description: '', purpose: '', url: '', defaultFlow: [],
       createdAt: json.exportedAt, updatedAt: json.exportedAt, ...a,
       order: typeof a.order === 'number' ? a.order : i,
     })),
     tasks: tasks.map((t) => ({
-      description: '', completedAt: null, completedDate: null,
+      description: '', completedAt: null, completedDate: null, flow: [],
       createdAt: json.exportedAt, updatedAt: json.exportedAt, ...t,
     })),
     settings: { ...DEFAULT_SETTINGS, ...(settings || {}) },
